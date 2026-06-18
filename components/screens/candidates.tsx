@@ -107,6 +107,32 @@ export function Candidates() {
     setAddOpen(false)
   }
 
+  const uploadResume = (files: FileList | null) => {
+    const file = files?.[0]
+    if (!file) return
+
+    const nameFromFile = file.name
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+    const candidateName = nameFromFile || "Uploaded Resume"
+
+    setCandidates((prev) => [
+      {
+        id: `resume-${Date.now()}`,
+        name: candidateName,
+        score: 0,
+        stage: "Applied",
+        summary: "Resume uploaded and queued for AI analysis",
+        flag: null,
+        added: "just now",
+      },
+      ...prev,
+    ])
+    toast(`Resume "${file.name}" uploaded and queued for analysis`)
+  }
+
   const openEdit = (c: any) => {
     setEditId(c.id)
     setForm({ name: c.name, email: emailFor(c.name), stage: c.stage })
@@ -138,25 +164,51 @@ export function Candidates() {
             {job ? ` for this position` : readonly && client ? ` for ${client.name}` : ""}
           </p>
         </div>
-        <Button className="w-full sm:w-auto shrink-0" onClick={() => setAddOpen(true)} style={{display: readonly ? "none" : "inline-flex"}}>
-          <Icon.Plus className="size-4" /> Add Candidate
-        </Button>
+        {!readonly && (
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button variant="outline" className="w-full shrink-0 sm:w-auto" onClick={() => document.getElementById("candidate-resume-upload")?.click()}>
+              <Icon.Upload className="size-4" /> Upload Resume
+            </Button>
+            <input
+              id="candidate-resume-upload"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              hidden
+              onChange={(e) => {
+                uploadResume(e.target.files)
+                e.target.value = ""
+              }}
+            />
+            <Button className="w-full shrink-0 sm:w-auto" onClick={() => setAddOpen(true)}>
+              <Icon.Plus className="size-4" /> Add Candidate
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
       <Card className="p-3 sm:p-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="relative flex-1 sm:max-w-xs">
-            <Icon.Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <TextInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search candidates" className="w-full pl-8 text-sm" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="flex flex-1 flex-col gap-2 sm:max-w-xs">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by candidate name</label>
+            <div className="relative">
+              <Icon.Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <TextInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search candidates" className="w-full pl-8 text-sm" />
+            </div>
           </div>
-          <Select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="sm:w-40 text-sm">
-            <option>All</option><option>Applied</option><option>Screened</option><option>Interview</option><option>Offer</option><option>Placed</option><option>Rejected</option>
-          </Select>
-          <Select value={scoreFilter} onChange={(e) => setScoreFilter(e.target.value)} className="sm:w-40 text-sm">
-            <option>All</option><option>80%+</option><option>60-79%</option><option>Below 60%</option>
-          </Select>
-          <button onClick={() => { setSearch(""); setStageFilter("All"); setScoreFilter("All") }} className="text-sm font-medium text-primary hover:underline sm:ml-auto whitespace-nowrap">Clear filters</button>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by stage</label>
+            <Select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="sm:w-40 text-sm">
+              <option>All</option><option>Applied</option><option>Screened</option><option>Interview</option><option>Offer</option><option>Placed</option><option>Rejected</option>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by score</label>
+            <Select value={scoreFilter} onChange={(e) => setScoreFilter(e.target.value)} className="sm:w-40 text-sm">
+              <option>All</option><option>80%+</option><option>60-79%</option><option>Below 60%</option>
+            </Select>
+          </div>
+          <button onClick={() => { setSearch(""); setStageFilter("All"); setScoreFilter("All") }} className="whitespace-nowrap text-sm font-medium text-primary hover:underline sm:ml-auto">Clear filters</button>
         </div>
       </Card>
 

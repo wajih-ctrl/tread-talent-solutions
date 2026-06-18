@@ -136,8 +136,22 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea {...props} className={cn(inputBase, "min-h-20 resize-y", props.className)} />
 }
 
-export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={cn(inputBase, "appearance-none", props.className)} />
+const selectChevron = "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e\")"
+
+export function Select({ className, style, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      style={{
+        backgroundImage: selectChevron,
+        backgroundPosition: "right 0.75rem center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "1rem",
+        ...style,
+      }}
+      className={cn(inputBase, "appearance-none pr-9", className)}
+    />
+  )
 }
 
 /* ---------- Buttons ---------- */

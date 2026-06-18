@@ -12,6 +12,10 @@ type NavState = {
   clientId?: string
   jobId?: string
   candidateId?: string
+  clientView?: "clients" | "jobs"
+  clientStatus?: "All" | "Active" | "Paused"
+  jobStatus?: "All" | "Open" | "On Hold" | "Closed"
+  aiStatus?: "All" | "Pending" | "Accepted" | "Rejected"
 }
 
 export type UserRole = "admin" | "client"
@@ -64,6 +68,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           clientId: clientIdFilter,
           jobId: nextJobId,
           candidateId: params?.candidateId ?? prev.candidateId,
+          clientView: screen === "clients" ? params?.clientView : undefined,
+          clientStatus: screen === "clients" ? params?.clientStatus : undefined,
+          jobStatus: screen === "clients" ? params?.jobStatus : undefined,
+          aiStatus: screen === "ai-analyzer" ? params?.aiStatus : undefined,
         }
       }
 
@@ -72,6 +80,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clientId: params?.clientId ?? prev.clientId,
         jobId: params?.jobId ?? prev.jobId,
         candidateId: params?.candidateId ?? prev.candidateId,
+        clientView: screen === "clients" ? params?.clientView : undefined,
+        clientStatus: screen === "clients" ? params?.clientStatus : undefined,
+        jobStatus: screen === "clients" ? params?.jobStatus : undefined,
+        aiStatus: screen === "ai-analyzer" ? params?.aiStatus : undefined,
       }
     })
   }, [clientIdFilter, role])

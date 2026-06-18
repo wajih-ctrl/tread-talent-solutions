@@ -63,21 +63,27 @@ export function Reports() {
             {currentClient ? `Recruitment performance for ${currentClient.name}.` : "Recruitment performance across all clients and roles."}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={range} onChange={(event) => setRange(event.target.value)} className="w-auto">
-            <option>Last 7 days</option>
-            <option>Last 30 days</option>
-            <option>Last 90 days</option>
-            <option>Year to date</option>
-          </Select>
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by date range</label>
+            <Select value={range} onChange={(event) => setRange(event.target.value)} className="w-auto">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>Last 90 days</option>
+              <option>Year to date</option>
+            </Select>
+          </div>
           {!readonly && (
             <>
-              <Select value={client} onChange={(event) => setClient(event.target.value)} className="w-auto">
-                <option>All Clients</option>
-                {clientMetrics.map((item) => (
-                  <option key={item.client}>{item.client}</option>
-                ))}
-              </Select>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by client</label>
+                <Select value={client} onChange={(event) => setClient(event.target.value)} className="w-auto">
+                  <option>All Clients</option>
+                  {clientMetrics.map((item) => (
+                    <option key={item.client}>{item.client}</option>
+                  ))}
+                </Select>
+              </div>
               <Button variant="outline" onClick={() => toast("Report exported as CSV")}>Export CSV</Button>
               <Button
                 onClick={() => {

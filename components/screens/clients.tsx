@@ -7,6 +7,8 @@ import { Card, StatusBadge, Modal, Field, TextInput, TextArea, Select, Button, T
 import { Icon } from "../icons"
 
 const INDUSTRIES = ["Technology", "Marketing", "Operations", "Healthcare", "Finance", "Other"]
+const CLIENT_STATUSES = ["All", "Active", "Paused"]
+const JOB_STATUSES = ["All", "Open", "On Hold", "Closed"]
 
 type FormState = {
   name: string; industry: string; contactName: string; contactEmail: string;
@@ -16,7 +18,7 @@ type FormState = {
 const emptyForm: FormState = { name: "", industry: "Technology", contactName: "", contactEmail: "", contactPhone: "", notes: "", status: "Active" }
 
 export function Clients() {
-  const { go, toast, role, clientIdFilter } = useApp()
+  const { nav, go, toast, role, clientIdFilter } = useApp()
   const { clients, setClients, jobs } = useStore()
   const [modal, setModal] = useState<"add" | "edit" | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
@@ -24,9 +26,23 @@ export function Clients() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const readonly = role === "client"
+  const clientView = nav.clientView || "clients"
+  const clientStatus = nav.clientStatus || "All"
+  const jobStatus = nav.jobStatus || "All"
   const displayClients = readonly ? clients.filter((c) => c.id === clientIdFilter) : clients
+  const filteredClients = displayClients.filter((client) => clientStatus === "All" || client.status === clientStatus)
   const currentClient = readonly ? displayClients[0] : null
   const clientJobs = currentClient ? jobs[currentClient.id] || [] : []
+  const filteredClientJobs = clientJobs.filter((job) => jobStatus === "All" || job.status === jobStatus)
+  const adminJobs = clients.flatMap((client) =>
+    (jobs[client.id] || []).map((job) => ({
+      ...job,
+      clientId: client.id,
+      clientName: client.name,
+      clientStatus: client.status,
+    })),
+  )
+  const filteredAdminJobs = adminJobs.filter((job) => jobStatus === "All" || job.status === jobStatus)
 
   const openAdd = () => { setForm(emptyForm); setModal("add") }
   const openEdit = (c: any) => {
@@ -93,9 +109,18 @@ export function Clients() {
           </Card>
         </div>
 
+        <Card className="p-4">
+          <div className="flex flex-col gap-2 sm:max-w-xs">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by job status</label>
+            <Select value={jobStatus} onChange={(e) => go("clients", { clientView: "jobs", jobStatus: e.target.value as any })}>
+              {JOB_STATUSES.map((status) => <option key={status}>{status}</option>)}
+            </Select>
+          </div>
+        </Card>
+
         <Card className="overflow-hidden">
-          {clientJobs.length === 0 ? (
-            <div className="py-14 text-center text-sm text-muted-foreground">No jobs are available for this client.</div>
+          {filteredClientJobs.length === 0 ? (
+            <div className="py-14 text-center text-sm text-muted-foreground">No jobs match this filter.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
@@ -111,7 +136,7 @@ export function Clients() {
                   </tr>
                 </thead>
                 <tbody>
-                  {clientJobs.map((job, index) => (
+                  {filteredClientJobs.map((job, index) => (
                     <tr key={job.id} className={`border-b border-border last:border-0 transition hover:bg-muted ${index % 2 ? "bg-muted/30" : ""}`}>
                       <td className="px-5 py-3">
                         <button
@@ -147,55 +172,139 @@ export function Clients() {
 
   return (
     <div className="space-y-3 sm:space-y-5">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-xl sm:text-[22px] font-semibold text-foreground">{readonly ? clientIdFilter === "apex" ? "Apex Corp" : clientIdFilter : "Clients"}</h2>
-        {!readonly && <Button onClick={openAdd} className="w-full sm:w-auto"><Icon.Plus className="size-4" /> Add Client</Button>}
-        {readonly && <span className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-medium">Read-only access</span>}
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground sm:text-[22px]">{clientView === "jobs" ? "Jobs" : "Clients"}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {clientView === "jobs"
+              ? `${filteredAdminJobs.length} role${filteredAdminJobs.length === 1 ? "" : "s"} shown across clients.`
+              : `${filteredClients.length} client${filteredClients.length === 1 ? "" : "s"} shown.`}
+          </p>
+        </div>
+        {clientView === "clients" && <Button onClick={openAdd} className="w-full sm:w-auto"><Icon.Plus className="size-4" /> Add Client</Button>}
       </div>
 
-      <Card className="overflow-x-auto">
-        {displayClients.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center">
-            <p className="text-sm text-muted-foreground">No clients found.</p>
-            {!readonly && <Button onClick={openAdd}><Icon.Plus className="size-4" /> Add your first client</Button>}
+      <Card className="p-4">
+        <div className="grid gap-3 md:grid-cols-[180px_220px_1fr] md:items-end">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter view</label>
+            <Select value={clientView} onChange={(e) => go("clients", { clientView: e.target.value as any, clientStatus: "All", jobStatus: "All" })}>
+              <option value="clients">Clients</option>
+              <option value="jobs">Jobs</option>
+            </Select>
           </div>
-        ) : (
-          <table className="w-full text-xs sm:text-sm min-w-max">
-            <thead>
-              <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <th className="px-3 sm:px-5 py-3">Client Name</th>
-                <th className="px-3 sm:px-5 py-3 hidden sm:table-cell">Industry</th>
-                <th className="px-3 sm:px-5 py-3">Jobs</th>
-                <th className="px-3 sm:px-5 py-3 hidden md:table-cell">Candidates</th>
-                <th className="px-3 sm:px-5 py-3 hidden lg:table-cell">Last Activity</th>
-                <th className="px-3 sm:px-5 py-3">Status</th>
-                <th className="px-3 sm:px-5 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayClients.map((c, i) => (
-                <tr key={c.id} className={`border-b border-border transition-colors hover:bg-muted ${i % 2 ? "bg-muted/30" : ""}`}>
-                  <td className="px-3 sm:px-5 py-3">
-                    <button onClick={() => go("client-folder", { clientId: c.id })} className="font-medium text-primary hover:underline truncate block">{c.name}</button>
-                  </td>
-                  <td className="px-3 sm:px-5 py-3 text-muted-foreground hidden sm:table-cell">{c.industry}</td>
-                  <td className="px-3 sm:px-5 py-3 tabular-nums">{c.jobs}</td>
-                  <td className="px-3 sm:px-5 py-3 tabular-nums hidden md:table-cell">{c.candidates}</td>
-                  <td className="px-3 sm:px-5 py-3 text-muted-foreground hidden lg:table-cell">{c.lastActivity}</td>
-                  <td className="px-3 sm:px-5 py-3"><StatusBadge status={c.status} /></td>
-                  <td className="px-3 sm:px-5 py-3">
-                    <div className="flex items-center justify-end gap-1 sm:gap-2">
-                      <button onClick={() => openEdit(c)} aria-label="Edit" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-primary"><Icon.Edit className="size-3.5 sm:size-4" /></button>
-                      <button onClick={() => setDeleteId(c.id)} aria-label="Delete" className="rounded-md p-1.5 text-muted-foreground hover:bg-danger/10 hover:text-danger"><Icon.Trash className="size-3.5 sm:size-4" /></button>
-                      <Button variant="outline" className="px-2 sm:px-3 py-1 text-[10px] sm:text-xs whitespace-nowrap" onClick={() => go("client-folder", { clientId: c.id })}><Icon.Eye className="size-3 mr-1" />View</Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+          {clientView === "clients" ? (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by client status</label>
+              <Select value={clientStatus} onChange={(e) => go("clients", { clientView: "clients", clientStatus: e.target.value as any })}>
+                {CLIENT_STATUSES.map((status) => <option key={status}>{status}</option>)}
+              </Select>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by job status</label>
+              <Select value={jobStatus} onChange={(e) => go("clients", { clientView: "jobs", jobStatus: e.target.value as any })}>
+                {JOB_STATUSES.map((status) => <option key={status}>{status}</option>)}
+              </Select>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Showing {clientView === "clients" ? clientStatus.toLowerCase() : jobStatus.toLowerCase()} {clientView}.
+          </p>
+        </div>
       </Card>
+
+      {clientView === "jobs" ? (
+        <Card className="overflow-x-auto">
+          {filteredAdminJobs.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted-foreground">No jobs match this filter.</div>
+          ) : (
+            <table className="w-full min-w-[880px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <th className="px-5 py-3">Job</th>
+                  <th className="px-5 py-3">Client</th>
+                  <th className="px-5 py-3">Department</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Candidates</th>
+                  <th className="px-5 py-3 text-right">Assessments</th>
+                  <th className="px-5 py-3">Created</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAdminJobs.map((job, index) => (
+                  <tr key={`${job.clientId}-${job.id}`} className={`border-b border-border transition-colors last:border-0 hover:bg-muted ${index % 2 ? "bg-muted/30" : ""}`}>
+                    <td className="px-5 py-3">
+                      <button onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })} className="font-medium text-primary hover:underline">{job.title}</button>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{job.type} - {job.location}</p>
+                    </td>
+                    <td className="px-5 py-3">
+                      <button onClick={() => go("client-folder", { clientId: job.clientId })} className="font-medium text-foreground hover:text-primary hover:underline">{job.clientName}</button>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{job.clientStatus}</p>
+                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{job.department}</td>
+                    <td className="px-5 py-3"><StatusBadge status={job.status} /></td>
+                    <td className="px-5 py-3 text-right tabular-nums">{job.candidates}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{job.analyzed || 0}</td>
+                    <td className="px-5 py-3 text-muted-foreground">{job.created}</td>
+                    <td className="px-5 py-3 text-right">
+                      <Button variant="outline" className="px-3 py-1 text-xs" onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })}>
+                        <Icon.Eye className="size-3.5" />
+                        View
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      ) : (
+        <Card className="overflow-x-auto">
+          {filteredClients.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <p className="text-sm text-muted-foreground">No clients match this filter.</p>
+              <Button onClick={openAdd}><Icon.Plus className="size-4" /> Add your first client</Button>
+            </div>
+          ) : (
+            <table className="w-full min-w-max text-xs sm:text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <th className="px-3 py-3 sm:px-5">Client Name</th>
+                  <th className="hidden px-3 py-3 sm:table-cell sm:px-5">Industry</th>
+                  <th className="px-3 py-3 sm:px-5">Jobs</th>
+                  <th className="hidden px-3 py-3 md:table-cell sm:px-5">Candidates</th>
+                  <th className="hidden px-3 py-3 lg:table-cell sm:px-5">Last Activity</th>
+                  <th className="px-3 py-3 sm:px-5">Status</th>
+                  <th className="px-3 py-3 text-right sm:px-5">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClients.map((c, i) => (
+                  <tr key={c.id} className={`border-b border-border transition-colors hover:bg-muted ${i % 2 ? "bg-muted/30" : ""}`}>
+                    <td className="px-3 py-3 sm:px-5">
+                      <button onClick={() => go("client-folder", { clientId: c.id })} className="block truncate font-medium text-primary hover:underline">{c.name}</button>
+                    </td>
+                    <td className="hidden px-3 py-3 text-muted-foreground sm:table-cell sm:px-5">{c.industry}</td>
+                    <td className="px-3 py-3 tabular-nums sm:px-5">{c.jobs}</td>
+                    <td className="hidden px-3 py-3 tabular-nums md:table-cell sm:px-5">{c.candidates}</td>
+                    <td className="hidden px-3 py-3 text-muted-foreground lg:table-cell sm:px-5">{c.lastActivity}</td>
+                    <td className="px-3 py-3 sm:px-5"><StatusBadge status={c.status} /></td>
+                    <td className="px-3 py-3 sm:px-5">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2">
+                        <button onClick={() => openEdit(c)} aria-label="Edit" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-primary"><Icon.Edit className="size-3.5 sm:size-4" /></button>
+                        <button onClick={() => setDeleteId(c.id)} aria-label="Delete" className="rounded-md p-1.5 text-muted-foreground hover:bg-danger/10 hover:text-danger"><Icon.Trash className="size-3.5 sm:size-4" /></button>
+                        <Button variant="outline" className="whitespace-nowrap px-2 py-1 text-[10px] sm:px-3 sm:text-xs" onClick={() => go("client-folder", { clientId: c.id })}><Icon.Eye className="mr-1 size-3" />View</Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
+      )}
 
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -216,7 +325,7 @@ export function Clients() {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Industry">
               <div className="relative">
-                <Icon.Building className="absolute left-3 top-3 size-4 text-muted-foreground pointer-events-none" />
+                <Icon.Building className="pointer-events-none absolute left-3 top-3 size-4 text-muted-foreground" />
                 <Select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} className="pl-9">{INDUSTRIES.map((x) => <option key={x}>{x}</option>)}</Select>
               </div>
             </Field>

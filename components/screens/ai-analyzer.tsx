@@ -1,24 +1,29 @@
 "use client"
 
-import { useState } from "react"
-import { analyzerSeed } from "@/lib/data"
+import { useEffect, useState } from "react"
 import { Card, ScoreBadge, Flag, Select, Button } from "../ui-kit"
 import { useApp } from "../app-context"
+import { useStore } from "../store"
+import { Icon } from "../icons"
 
 export function AIAnalyzer() {
-  const { toast } = useApp()
-  const [rows, setRows] = useState(analyzerSeed)
+  const { nav, toast } = useApp()
+  const { analyzer, setAnalyzer } = useStore()
   const [jobFilter, setJobFilter] = useState("All")
   const [clientFilter, setClientFilter] = useState("All")
-  const [statusFilter, setStatusFilter] = useState("All")
+  const [statusFilter, setStatusFilter] = useState<string>(nav.aiStatus || "All")
   const [minScore, setMinScore] = useState(0)
   const [reanalyzing, setReanalyzing] = useState(false)
 
-  const jobs = ["All", ...Array.from(new Set(analyzerSeed.map((r) => r.job)))]
-  const clients = ["All", ...Array.from(new Set(analyzerSeed.map((r) => r.client)))]
-  const statuses = ["All", ...Array.from(new Set(analyzerSeed.map((r) => r.status)))]
+  useEffect(() => {
+    setStatusFilter(nav.aiStatus || "All")
+  }, [nav.aiStatus])
 
-  const filtered = rows.filter(
+  const jobs = ["All", ...Array.from(new Set(analyzer.map((r) => r.job)))]
+  const clients = ["All", ...Array.from(new Set(analyzer.map((r) => r.client)))]
+  const statuses = ["All", ...Array.from(new Set(analyzer.map((r) => r.status)))]
+
+  const filtered = analyzer.filter(
     (r) =>
       (jobFilter === "All" || r.job === jobFilter) &&
       (clientFilter === "All" || r.client === clientFilter) &&
@@ -27,7 +32,7 @@ export function AIAnalyzer() {
   )
 
   function setStatus(id: string, status: string) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
+    setAnalyzer((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
     toast(`Candidate ${status.toLowerCase()}`)
   }
 
@@ -52,7 +57,7 @@ export function AIAnalyzer() {
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => document.getElementById('resume-upload')?.click()}>
-            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <Icon.Upload className="size-4" />
             Upload Resume
           </Button>
           <input id="resume-upload" type="file" accept=".pdf,.doc,.docx" hidden onChange={(e) => { if (e.target.files?.[0]) toast(`Resume "${e.target.files[0].name}" uploaded and queued for analysis`) }} />
@@ -83,9 +88,12 @@ export function AIAnalyzer() {
       </div>
 
       {/* Filters */}
-      <Card className="flex flex-wrap items-center gap-4 p-4">
+      <Card className="flex flex-wrap items-end gap-4 p-4">
+        <div className="w-full rounded-lg bg-muted/60 px-3 py-2 text-xs font-medium text-muted-foreground">
+          Current filter: status is {statusFilter}, job is {jobFilter}, client is {clientFilter}, minimum score is {minScore}.
+        </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-muted-foreground">Job</label>
+          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by job</label>
           <Select value={jobFilter} onChange={(e) => setJobFilter(e.target.value)} className="w-48">
             {jobs.map((j) => (
               <option key={j}>{j}</option>
@@ -93,7 +101,7 @@ export function AIAnalyzer() {
           </Select>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-muted-foreground">Client</label>
+          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by client</label>
           <Select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="w-48">
             {clients.map((c) => (
               <option key={c}>{c}</option>
@@ -101,15 +109,15 @@ export function AIAnalyzer() {
           </Select>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-muted-foreground">Status</label>
+          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by assessment status</label>
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-40">
             {statuses.map((s) => (
               <option key={s}>{s}</option>
             ))}
           </Select>
         </div>
-        <div className="flex-1 min-w-[220px]">
-          <label className="text-xs font-medium text-muted-foreground">Min Score: {minScore}</label>
+        <div className="min-w-[220px] flex-1">
+          <label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Filter by minimum score: {minScore}</label>
           <input
             type="range"
             min={0}

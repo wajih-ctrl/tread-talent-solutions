@@ -101,7 +101,7 @@ export function Dashboard() {
           helper: `${onHoldJobs.length} on hold`,
           icon: "Briefcase" as const,
           tone: "blue" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "jobs", jobStatus: "All" }),
         },
         {
           label: "Open jobs",
@@ -109,7 +109,7 @@ export function Dashboard() {
           helper: "Currently accepting candidates",
           icon: "Check" as const,
           tone: "green" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "jobs", jobStatus: "Open" }),
         },
         {
           label: "Total candidates",
@@ -143,7 +143,7 @@ export function Dashboard() {
           helper: "All customer accounts",
           icon: "Building" as const,
           tone: "blue" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "clients", clientStatus: "All" }),
         },
         {
           label: "Active clients",
@@ -151,7 +151,7 @@ export function Dashboard() {
           helper: "Clients currently hiring",
           icon: "Users" as const,
           tone: "green" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "clients", clientStatus: "Active" }),
         },
         {
           label: "Job positions",
@@ -159,7 +159,7 @@ export function Dashboard() {
           helper: "Roles across all clients",
           icon: "Briefcase" as const,
           tone: "slate" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "jobs", jobStatus: "All" }),
         },
         {
           label: "Open jobs",
@@ -167,7 +167,7 @@ export function Dashboard() {
           helper: "Currently accepting candidates",
           icon: "Check" as const,
           tone: "green" as const,
-          action: () => go("clients"),
+          action: () => go("clients", { clientView: "jobs", jobStatus: "Open" }),
         },
         {
           label: "Total candidates",
@@ -183,7 +183,7 @@ export function Dashboard() {
           helper: "CVs scored by AI",
           icon: "Ai" as const,
           tone: "amber" as const,
-          action: () => go("ai-analyzer"),
+          action: () => go("ai-analyzer", { aiStatus: "All" }),
         },
         {
           label: "Pending assessment",
@@ -191,7 +191,7 @@ export function Dashboard() {
           helper: `${flaggedCandidates} flagged for review`,
           icon: "Upload" as const,
           tone: "blue" as const,
-          action: () => go("ai-analyzer"),
+          action: () => go("ai-analyzer", { aiStatus: "Pending" }),
         },
       ]
 
@@ -218,7 +218,7 @@ export function Dashboard() {
       detail: "Open roles where candidates still need analysis",
       icon: "Upload" as const,
       tone: "green" as const,
-      action: () => go(readonly ? "clients" : "ai-analyzer"),
+      action: () => go(readonly ? "clients" : "ai-analyzer", readonly ? { clientView: "jobs", jobStatus: "Open" } : { aiStatus: "Pending" }),
     },
   ]
 
@@ -290,12 +290,12 @@ export function Dashboard() {
                 </Button>
               )}
               {readonly && (
-                <Button variant="outline" onClick={() => go("clients")} className="min-h-11 w-full sm:w-auto">
+                <Button variant="outline" onClick={() => go("clients", { clientView: "jobs", jobStatus: "All" })} className="min-h-11 w-full sm:w-auto">
                   <Icon.Briefcase className="size-4" />
                   Jobs
                 </Button>
               )}
-              <Button onClick={() => go(readonly ? "reports" : "ai-analyzer")} className="min-h-11 w-full sm:w-auto">
+              <Button onClick={() => go(readonly ? "reports" : "ai-analyzer", readonly ? undefined : { aiStatus: "Pending" })} className="min-h-11 w-full sm:w-auto">
                 {readonly ? <Icon.Reports className="size-4" /> : <Icon.Upload className="size-4" />}
                 {readonly ? "Reports" : "Review CVs"}
               </Button>
@@ -428,7 +428,11 @@ export function Dashboard() {
                 {currentClient ? `${currentClient.name} hiring activity` : "Active account overview"}
               </h2>
             </div>
-            <Button variant="outline" onClick={() => go("clients")} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => go("clients", currentClient ? { clientView: "jobs", jobStatus: "Open" } : { clientView: "clients", clientStatus: "All" })}
+              className="w-full sm:w-auto"
+            >
               <Icon.ExternalLink className="size-4" />
               {currentClient ? "Open jobs" : "Open clients"}
             </Button>
