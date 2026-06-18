@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useApp } from "../app-context"
 import { useStore } from "../store"
 import { Card, Button, StatusBadge, ScoreBadge } from "../ui-kit"
@@ -28,6 +29,14 @@ const statToneClasses = {
 }
 
 const stageBars = ["bg-slate-400", "bg-blue-500", "bg-indigo-500", "bg-amber-500", "bg-green-500"]
+const DATE_FILTERS = [
+  { key: "today", label: "Today" },
+  { key: "week", label: "This week" },
+  { key: "month", label: "This month" },
+  { key: "all", label: "All time" },
+] as const
+
+type DateRange = (typeof DATE_FILTERS)[number]["key"]
 
 function cleanActivityText(text: string) {
   return text.replace(/â†’/g, "->").replace(/â€”/g, "-")
@@ -41,6 +50,7 @@ function percent(value: number, total: number) {
 export function Dashboard() {
   const { go, role, clientIdFilter } = useApp()
   const { clients, jobs, candidates, interviews, analyzer } = useStore()
+  const [dateRange, setDateRange] = useState<DateRange>("week")
 
   const readonly = role === "client"
   const currentClient = readonly ? clients.find((client) => client.id === clientIdFilter) : null
@@ -75,6 +85,11 @@ export function Dashboard() {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
+  })
+  const compactToday = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
     year: "numeric",
   })
 
@@ -211,11 +226,15 @@ export function Dashboard() {
   const recentActivity = readonly && currentClient
     ? activityFeed.filter((item) => item.text.includes(currentClient.name))
     : activityFeed
+  const rangeLabel = DATE_FILTERS.find((filter) => filter.key === dateRange)?.label || "This week"
+  const rangeLimit: Record<DateRange, number> = { today: 2, week: 4, month: 6, all: 999 }
+  const visibleRecentActivity = recentActivity.slice(0, rangeLimit[dateRange])
+  const filteredInterviews = visibleInterviews.slice(0, rangeLimit[dateRange])
 
   return (
     <div className="space-y-5 sm:space-y-6">
       <section className="space-y-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-4">
           <div className="min-w-0">
             <div className="mb-3 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm">
               <Icon.Dashboard className="size-3.5 text-primary" />
@@ -231,26 +250,56 @@ export function Dashboard() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-              <span className="font-medium text-foreground">{today}</span>
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-sm xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+              <div className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-card text-primary shadow-sm">
+                  <Icon.Calendar className="size-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dashboard date</p>
+                  <p className="truncate text-sm font-semibold text-foreground" title={today}>{compactToday}</p>
+                </div>
+              </div>
+              <div className="inline-flex w-full overflow-hidden rounded-lg border border-border bg-muted p-0.5 md:w-auto">
+                {DATE_FILTERS.map((filter) => (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() => setDateRange(filter.key)}
+                    className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition md:flex-none ${
+                      dateRange === filter.key
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            {!readonly && (
-              <Button variant="outline" onClick={() => go("interview-scheduling")} className="w-full sm:w-auto">
-                <Icon.Calendar className="size-4" />
-                Interviews
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <span className="rounded-lg bg-accent px-3 py-2 text-center text-xs font-semibold text-accent-foreground sm:text-left">
+                Showing {rangeLabel.toLowerCase()}
+              </span>
+              {!readonly && (
+                <Button variant="outline" onClick={() => go("interview-scheduling")} className="min-h-11 w-full sm:w-auto">
+                  <Icon.Calendar className="size-4" />
+                  Interviews
+                </Button>
+              )}
+              {readonly && (
+                <Button variant="outline" onClick={() => go("clients")} className="min-h-11 w-full sm:w-auto">
+                  <Icon.Briefcase className="size-4" />
+                  Jobs
+                </Button>
+              )}
+              <Button onClick={() => go(readonly ? "reports" : "ai-analyzer")} className="min-h-11 w-full sm:w-auto">
+                {readonly ? <Icon.Reports className="size-4" /> : <Icon.Upload className="size-4" />}
+                {readonly ? "Reports" : "Review CVs"}
               </Button>
-            )}
-            {readonly && (
-              <Button variant="outline" onClick={() => go("clients")} className="w-full sm:w-auto">
-                <Icon.Briefcase className="size-4" />
-                Jobs
-              </Button>
-            )}
-            <Button onClick={() => go(readonly ? "reports" : "ai-analyzer")} className="w-full sm:w-auto">
-              {readonly ? <Icon.Reports className="size-4" /> : <Icon.Upload className="size-4" />}
-              {readonly ? "Reports" : "Review CVs"}
-            </Button>
+            </div>
           </div>
         </div>
 
@@ -472,12 +521,12 @@ export function Dashboard() {
               <h2 className="mt-1 text-lg font-semibold text-foreground">Next scheduled</h2>
             </div>
             <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">
-              {visibleInterviews.length} total
+              {filteredInterviews.length} shown
             </span>
           </div>
 
           <div className="mt-4 divide-y divide-border">
-            {visibleInterviews.slice(0, 5).map((interview) => {
+            {filteredInterviews.map((interview) => {
               const IconComp = Icon[TYPE_ICONS[interview.type]]
               return (
                 <div key={interview.id} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
@@ -495,8 +544,8 @@ export function Dashboard() {
                 </div>
               )
             })}
-            {visibleInterviews.length === 0 && (
-              <div className="py-8 text-center text-sm text-muted-foreground">No interviews scheduled.</div>
+            {filteredInterviews.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">No interviews for this date range.</div>
             )}
           </div>
         </Card>
@@ -553,7 +602,7 @@ export function Dashboard() {
           </div>
 
           <div className="mt-4 divide-y divide-border">
-            {recentActivity.slice(0, 5).map((item, index) => {
+            {visibleRecentActivity.map((item, index) => {
               const IconComp = Icon[ACTIVITY_ICONS[item.type]]
               return (
                 <div key={`${item.time}-${index}`} className="flex items-start gap-3 py-4 first:pt-0 last:pb-0">
