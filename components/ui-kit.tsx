@@ -21,7 +21,7 @@ export function StatusBadge({ status }: { status: string }) {
     Rejected: "bg-danger/15 text-danger",
   }
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", map[status] || "bg-muted text-muted-foreground")}>
+    <span className={cn("inline-flex whitespace-nowrap items-center rounded-full px-2.5 py-0.5 text-xs font-medium", map[status] || "bg-muted text-muted-foreground")}>
       {status}
     </span>
   )

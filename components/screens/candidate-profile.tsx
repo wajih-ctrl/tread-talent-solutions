@@ -283,12 +283,13 @@ export function CandidateProfile() {
         </div>
       )}
 
-      {!readonly && (
-      <>
       {tab === "Recruiter Remarks" && (
         <Card className="p-5">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">Recruiter Remarks</h3>
-          <div className="space-y-3 max-h-96 overflow-y-auto border-b border-border pb-4 mb-4">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Recruiter Remarks</h3>
+            {readonly && <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">Read-only access</span>}
+          </div>
+          <div className={`max-h-96 space-y-3 overflow-y-auto ${readonly ? "" : "mb-4 border-b border-border pb-4"}`}>
             {notes.map((n, i) => (
               <div key={i} className="text-xs text-muted-foreground">
                 <p className="font-medium">{n.time}</p>
@@ -296,14 +297,16 @@ export function CandidateProfile() {
               </div>
             ))}
           </div>
-          <div className="space-y-2">
-            <TextArea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
-            <Button onClick={addNote} className="w-full"><Icon.MessageSquarePlus className="size-4" /> Add Note</Button>
-          </div>
+          {!readonly && (
+            <div className="space-y-2">
+              <TextArea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
+              <Button onClick={addNote} className="w-full"><Icon.MessageSquarePlus className="size-4" /> Add Note</Button>
+            </div>
+          )}
         </Card>
       )}
 
-      {tab === "Status History" && (
+      {!readonly && tab === "Status History" && (
         <Card className="p-5">
           <h3 className="mb-4 text-sm font-semibold text-foreground">Status History</h3>
           <ol className="relative ml-2 space-y-5 border-l border-border pl-6">
@@ -324,8 +327,6 @@ export function CandidateProfile() {
             <Button onClick={updateStage}>Update Stage</Button>
           </div>
         </Card>
-      )}
-      </>
       )}
 
       {tab === "Call Transcript & Notes" && (

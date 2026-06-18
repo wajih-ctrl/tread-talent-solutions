@@ -123,7 +123,16 @@ export function Clients() {
             <div className="py-14 text-center text-sm text-muted-foreground">No jobs match this filter.</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-sm">
+              <table className="w-full min-w-[840px] table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[28%]" />
+                  <col className="w-[15%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[7%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     <th className="px-5 py-3">Job</th>
@@ -138,23 +147,23 @@ export function Clients() {
                 <tbody>
                   {filteredClientJobs.map((job, index) => (
                     <tr key={job.id} className={`border-b border-border last:border-0 transition hover:bg-muted ${index % 2 ? "bg-muted/30" : ""}`}>
-                      <td className="px-5 py-3">
+                      <td className="px-5 py-3 align-middle">
                         <button
                           type="button"
                           onClick={() => go("job-detail", { clientId: currentClient.id, jobId: job.id })}
-                          className="font-medium text-primary hover:underline"
+                          className="block max-w-full truncate text-left font-medium text-primary hover:underline"
                         >
                           {job.title}
                         </button>
-                        <p className="mt-0.5 text-xs text-muted-foreground">{job.type} - {job.created}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{job.type} - {job.created}</p>
                       </td>
-                      <td className="px-5 py-3 text-muted-foreground">{job.department}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{job.location}</td>
-                      <td className="px-5 py-3"><StatusBadge status={job.status} /></td>
-                      <td className="px-5 py-3 text-right tabular-nums">{job.candidates}</td>
-                      <td className="px-5 py-3 text-right tabular-nums">{job.analyzed || 0}</td>
-                      <td className="px-5 py-3 text-right">
-                        <Button variant="outline" className="px-3 py-1 text-xs" onClick={() => go("job-detail", { clientId: currentClient.id, jobId: job.id })}>
+                      <td className="truncate px-5 py-3 align-middle text-muted-foreground">{job.department}</td>
+                      <td className="truncate px-5 py-3 align-middle text-muted-foreground">{job.location}</td>
+                      <td className="px-5 py-3 align-middle"><StatusBadge status={job.status} /></td>
+                      <td className="px-5 py-3 text-right align-middle tabular-nums">{job.candidates}</td>
+                      <td className="px-5 py-3 text-right align-middle tabular-nums">{job.analyzed || 0}</td>
+                      <td className="px-5 py-3 text-right align-middle">
+                        <Button variant="outline" className="px-3 py-1 text-xs whitespace-nowrap" onClick={() => go("job-detail", { clientId: currentClient.id, jobId: job.id })}>
                           <Icon.Eye className="size-3.5" />
                           View
                         </Button>
@@ -219,7 +228,17 @@ export function Clients() {
           {filteredAdminJobs.length === 0 ? (
             <div className="py-16 text-center text-sm text-muted-foreground">No jobs match this filter.</div>
           ) : (
-            <table className="w-full min-w-[880px] text-sm">
+            <table className="w-full min-w-[1040px] table-fixed text-sm">
+              <colgroup>
+                <col className="w-[20%]" />
+                <col className="w-[16%]" />
+                <col className="w-[13%]" />
+                <col className="w-[11%]" />
+                <col className="w-[10%]" />
+                <col className="w-[10%]" />
+                <col className="w-[11%]" />
+                <col className="w-[9%]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="px-5 py-3">Job</th>
@@ -235,21 +254,21 @@ export function Clients() {
               <tbody>
                 {filteredAdminJobs.map((job, index) => (
                   <tr key={`${job.clientId}-${job.id}`} className={`border-b border-border transition-colors last:border-0 hover:bg-muted ${index % 2 ? "bg-muted/30" : ""}`}>
-                    <td className="px-5 py-3">
-                      <button onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })} className="font-medium text-primary hover:underline">{job.title}</button>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{job.type} - {job.location}</p>
+                    <td className="px-5 py-3 align-middle">
+                      <button onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })} className="block max-w-full truncate text-left font-medium text-primary hover:underline">{job.title}</button>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{job.type} - {job.location}</p>
                     </td>
-                    <td className="px-5 py-3">
-                      <button onClick={() => go("client-folder", { clientId: job.clientId })} className="font-medium text-foreground hover:text-primary hover:underline">{job.clientName}</button>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{job.clientStatus}</p>
+                    <td className="px-5 py-3 align-middle">
+                      <button onClick={() => go("client-folder", { clientId: job.clientId })} className="block max-w-full truncate text-left font-medium text-foreground hover:text-primary hover:underline">{job.clientName}</button>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{job.clientStatus}</p>
                     </td>
-                    <td className="px-5 py-3 text-muted-foreground">{job.department}</td>
-                    <td className="px-5 py-3"><StatusBadge status={job.status} /></td>
-                    <td className="px-5 py-3 text-right tabular-nums">{job.candidates}</td>
-                    <td className="px-5 py-3 text-right tabular-nums">{job.analyzed || 0}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{job.created}</td>
-                    <td className="px-5 py-3 text-right">
-                      <Button variant="outline" className="px-3 py-1 text-xs" onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })}>
+                    <td className="truncate px-5 py-3 align-middle text-muted-foreground">{job.department}</td>
+                    <td className="px-5 py-3 align-middle"><StatusBadge status={job.status} /></td>
+                    <td className="px-5 py-3 text-right align-middle tabular-nums">{job.candidates}</td>
+                    <td className="px-5 py-3 text-right align-middle tabular-nums">{job.analyzed || 0}</td>
+                    <td className="whitespace-nowrap px-5 py-3 align-middle text-muted-foreground">{job.created}</td>
+                    <td className="px-5 py-3 text-right align-middle">
+                      <Button variant="outline" className="px-3 py-1 text-xs whitespace-nowrap" onClick={() => go("job-detail", { clientId: job.clientId, jobId: job.id })}>
                         <Icon.Eye className="size-3.5" />
                         View
                       </Button>
