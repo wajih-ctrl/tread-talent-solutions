@@ -3,13 +3,14 @@ import { StoreProvider } from "@/components/store"
 import { PublicJobApplication } from "@/components/screens/public-job-application"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     jobId: string | string[]
-  }
+  }>
 }
 
-export default function ApplyPage({ params }: PageProps) {
-  const jobId = Array.isArray(params.jobId) ? params.jobId[0] : params.jobId
+export default async function ApplyPage({ params }: PageProps) {
+  const resolvedParams = await params
+  const jobId = Array.isArray(resolvedParams.jobId) ? resolvedParams.jobId[0] : resolvedParams.jobId
 
   return (
     <AppProvider>

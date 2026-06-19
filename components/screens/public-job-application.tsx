@@ -14,6 +14,7 @@ export function PublicJobApplication({ jobId }: { jobId: string }) {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [notes, setNotes] = useState("")
+  const [resumeFile, setResumeFile] = useState<File | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -47,6 +48,10 @@ export function PublicJobApplication({ jobId }: { jobId: string }) {
       toast("Please fill in all required fields")
       return
     }
+    if (!resumeFile) {
+      toast("Please upload your CV or resume")
+      return
+    }
 
     setLoading(true)
     setTimeout(() => {
@@ -56,7 +61,7 @@ export function PublicJobApplication({ jobId }: { jobId: string }) {
           name: name.trim(),
           score: 0,
           stage: "Applied",
-          summary: "Submitted via public application",
+          summary: `Submitted via public application with resume: ${resumeFile.name}`,
           flag: null,
           added: "just now",
         },
@@ -67,6 +72,35 @@ export function PublicJobApplication({ jobId }: { jobId: string }) {
       setSubmitted(true)
       toast("Application submitted successfully")
     }, 800)
+  }
+
+  const handleResumeUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    if (!file) {
+      setResumeFile(null)
+      return
+    }
+
+    const allowedExtensions = [".pdf", ".doc", ".docx"]
+    const lowerName = file.name.toLowerCase()
+    const validType = allowedExtensions.some((extension) => lowerName.endsWith(extension))
+    const maxBytes = 10 * 1024 * 1024
+
+    if (!validType) {
+      setResumeFile(null)
+      e.target.value = ""
+      toast("Please upload a PDF, DOC, or DOCX file")
+      return
+    }
+
+    if (file.size > maxBytes) {
+      setResumeFile(null)
+      e.target.value = ""
+      toast("Resume must be 10 MB or smaller")
+      return
+    }
+
+    setResumeFile(file)
   }
 
   if (submitted) {
@@ -170,9 +204,53 @@ export function PublicJobApplication({ jobId }: { jobId: string }) {
               />
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-xs font-medium text-blue-900 mb-1">CV Upload</p>
-              <p className="text-xs text-blue-800">In the live version, you'd be able to upload your CV here. For now, please include a link or details in your cover letter above.</p>
+            <div>
+              <label className="mb-2 block">
+                <span className="text-sm font-medium text-foreground">Upload CV or Resume *</span>
+              </label>
+              <label
+                htmlFor="public-resume-upload"
+                className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-border bg-muted/40 px-4 py-8 text-center transition hover:border-primary hover:bg-accent/40"
+              >
+                <span className="grid size-11 place-items-center rounded-full bg-primary/10 text-primary">
+                  {resumeFile ? <Icon.Check className="size-5" /> : <Icon.Upload className="size-5" />}
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold text-foreground">
+                    {resumeFile ? resumeFile.name : "Choose resume file"}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    PDF, DOC, or DOCX up to 10 MB
+                  </span>
+                </span>
+              </label>
+              <input
+                id="public-resume-upload"
+                name="resume"
+                type="file"
+                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleResumeUpload}
+                className="sr-only"
+                aria-required="true"
+              />
+              {resumeFile && (
+                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-success/30 bg-success/10 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="min-w-0 truncate text-sm font-medium text-success">
+                    Selected: {resumeFile.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setResumeFile(null)
+                      const input = document.getElementById("public-resume-upload") as HTMLInputElement | null
+                      if (input) input.value = ""
+                    }}
+                    className="w-fit text-xs font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Remove file
+                  </button>
+                </div>
+              )}
             </div>
 
             <Button
